@@ -1,0 +1,11 @@
+Viscosity20In_Calc	TI.PassportVisc
+ConsumptionIn	TI.QVmom
+ConsumptionOut	TI.Vmom
+PressureIn	TI.Pin
+PressureOut	TI.Pout
+MassFlow_Calc	TI.Qmom
+TemperatureOut	TI.Tout
+AccumulativeConsumptionCalc	TI.QVsut
+AccumulativeMassConsumptionCalc	TI.Qsut
+Density20In_Calc	TI.Ro
+Status	State.Status

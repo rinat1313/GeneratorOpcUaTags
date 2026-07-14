@@ -1,0 +1,9 @@
+version: '3.8'
+services:
+  app:
+    build: .
+    ports:
+      - "10.200.212.71:80:8080"
+    volumes:
+      - ./data:/root/data
+      - ./Шаблоны:/root/Шаблоны

@@ -1,0 +1,3 @@
+PressureIn	TI.Pin
+PressureOut	TI.P
+PigStatus	State.PuskOU

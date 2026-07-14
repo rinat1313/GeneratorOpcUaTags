@@ -1,0 +1,11 @@
+Status	State.Status
+Density20In_Calc	TI.Ro
+Viscosity20In_Calc	TI.PassportVisc
+ConsumptionIn	пусто
+ConsumptionOut	TI.QVmom
+PressureIn	TI.P
+PressureOut	TI.Pout
+MassFlow_Calc	TI.Qmom
+TemperatureIn	TI.Toil
+AccumulativeConsumptionCalc	TI.Qsut
+AccumulativeMassConsumptionCalc	TI.Qint

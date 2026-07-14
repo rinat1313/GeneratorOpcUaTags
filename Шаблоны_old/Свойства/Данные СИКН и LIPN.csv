@@ -1,0 +1,14 @@
+		СИКН	LIPN
+	Viscosity20In_Calc	TI.PassportVisc	TI.PassportVisc
+	ConsumptionIn	TI.QVmom	TI.QVmom
+	ConsumptionOut	TI.Vmom	TI.Vmom
+	PressureIn	TI.Pin	TI.P
+	PressureOut	TI.Pout	TI.Pout
+	MassFlow_Calc	TI.Qmom	TI.Qmom
+	TemperatureOut	TI.Tout	TI.Tout
+	AccumulativeConsumptionCalc	TI.QVsut	TI.QVsut
+	AccumulativeMassConsumptionCalc	TI.Qsut	TI.Qsut
+	Density20In_Calc	TI.Ro	TI.Ro
+	Status	State.Status	State.Status
+	TemperatureIn	нету	TI.Toil
+	PressureLooses	нету	TI.Pdiff

@@ -1,0 +1,2293 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Генератор файла для импорта тегов в OPC UA</title>
+    <style>
+        /* CSS переменные для светлой и тёмной темы */
+        :root {
+            --bg-color: #f5f5f5;
+            --container-bg: white;
+            --text-color: #333;
+            --panel-bg: #fafafa;
+            --border-color: #ddd;
+            --header-color: #2c3e50;
+            --table-header-bg: #3498db;
+            --table-header-text: white;
+            --table-row-even: #f9f9f9;
+            --table-row-odd: white;
+            --input-bg: white;
+            --input-border: #ccc;
+            --button-primary: #3498db;
+            --button-primary-hover: #2980b9;
+            --button-danger: #e74c3c;
+            --button-danger-hover: #c0392b;
+            --button-success: #27ae60;
+            --button-success-hover: #2ecc71;
+            --button-warning: #f39c12;
+            --button-warning-hover: #e67e22;
+            --button-secondary: #95a5a6;
+            --button-secondary-hover: #7f8c8d;
+            --button-info: #00bcd4;
+            --button-info-hover: #00acc1;
+            --tab-inactive: #7f8c8d;
+            --tab-inactive-bg: #f8f9fa;
+            --tab-hover-bg: #e9ecef;
+            --tab-hover-text: #2c3e50;
+            --non-editable-bg: #f5f5f5;
+            --non-editable-text: #555;
+            --empty-message: #7f8c8d;
+            --footer-bg: #ecf0f1;
+            --overlay-bg: rgba(255,255,255,0.8);
+            --shadow-color: rgba(0,0,0,0.1);
+        }
+
+        /* Тёмная тема - с синими акцентами */
+        [data-theme="dark"] {
+            --bg-color: #1a1a1a;
+            --container-bg: #2d2d2d;
+            --text-color: #e0e0e0;
+            --panel-bg: #363636;
+            --border-color: #444;
+            --header-color: #64b5f6;
+            --table-header-bg: #1976d2;
+            --table-header-text: white;
+            --table-row-even: #404040;
+            --table-row-odd: #363636;
+            --input-bg: #404040;
+            --input-border: #555;
+            --button-primary: #1976d2;
+            --button-primary-hover: #1565c0;
+            --button-danger: #d32f2f;
+            --button-danger-hover: #b71c1c;
+            --button-success: #388e3c;
+            --button-success-hover: #2e7d32;
+            --button-warning: #f57c00;
+            --button-warning-hover: #ef6c00;
+            --button-secondary: #616161;
+            --button-secondary-hover: #424242;
+            --button-info: #0097a7;
+            --button-info-hover: #00838f;
+            --tab-inactive: #aaa;
+            --tab-inactive-bg: #404040;
+            --tab-hover-bg: #505050;
+            --tab-hover-text: #fff;
+            --non-editable-bg: #404040;
+            --non-editable-text: #ccc;
+            --empty-message: #888;
+            --footer-bg: #363636;
+            --overlay-bg: rgba(0,0,0,0.8);
+            --shadow-color: rgba(0,0,0,0.3);
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 20px;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            transition: background-color 0.3s, color 0.3s;
+        }
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background-color: var(--container-bg);
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px var(--shadow-color);
+            transition: background-color 0.3s, box-shadow 0.3s;
+        }
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        .header h1 {
+            margin: 0;
+            color: var(--header-color);
+            transition: color 0.3s;
+        }
+        .header-right {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+        .info-btn {
+            background-color: var(--button-warning);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            font-size: 24px;
+            font-weight: bold;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background-color 0.3s;
+        }
+        .info-btn:hover {
+            background-color: var(--button-warning-hover);
+        }
+        .theme-toggle {
+            background-color: var(--button-secondary);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 8px 16px;
+            font-size: 14px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            transition: background-color 0.3s;
+        }
+        .theme-toggle:hover {
+            background-color: var(--button-secondary-hover);
+        }
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+        }
+        .modal-content {
+            background-color: var(--container-bg);
+            margin: 15% auto;
+            padding: 20px;
+            border-radius: 8px;
+            width: 500px;
+            max-width: 80%;
+            box-shadow: 0 4px 20px var(--shadow-color);
+            transition: background-color 0.3s;
+        }
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        .modal-header h2 {
+            margin: 0;
+            color: var(--header-color);
+        }
+        .close-btn {
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: var(--text-color);
+        }
+        .close-btn:hover {
+            color: var(--header-color);
+        }
+        .modal-body {
+            line-height: 1.6;
+        }
+        .modal-body ul {
+            padding-left: 20px;
+        }
+        h2, h3 {
+            color: var(--header-color);
+            transition: color 0.3s;
+        }
+        .panel {
+            margin-bottom: 30px;
+            padding: 15px;
+            border: 1px solid var(--border-color);
+            border-radius: 5px;
+            background-color: var(--panel-bg);
+            position: relative;
+            transition: background-color 0.3s, border-color 0.3s;
+        }
+        .flex-row {
+            display: flex;
+            gap: 20px;
+            align-items: center;
+            flex-wrap: wrap;
+            margin-bottom: 20px;
+        }
+        .flex-row > div {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        select, button, input[type="checkbox"], input[type="text"] {
+            padding: 10px 14px;
+            border: 1px solid var(--input-border);
+            border-radius: 4px;
+            font-size: 15px;
+            background-color: var(--input-bg);
+            color: var(--text-color);
+            transition: background-color 0.3s, color 0.3s, border-color 0.3s;
+        }
+        select {
+            min-width: 150px;
+        }
+        #solutionSelect {
+            min-width: 525px;
+            max-width: 750px;
+        }
+        button {
+            background-color: var(--button-primary);
+            color: white;
+            border: none;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            margin-right: 5px;
+            font-size: 15px;
+            padding: 10px 16px;
+        }
+        button:hover {
+            background-color: var(--button-primary-hover);
+        }
+        button.danger {
+            background-color: var(--button-danger);
+        }
+        button.danger:hover {
+            background-color: var(--button-danger-hover);
+        }
+        button.success {
+            background-color: var(--button-success);
+        }
+        button.success:hover {
+            background-color: var(--button-success-hover);
+        }
+        button.warning {
+            background-color: var(--button-warning);
+        }
+        button.warning:hover {
+            background-color: var(--button-warning-hover);
+        }
+        button.secondary {
+            background-color: var(--button-secondary);
+        }
+        button.secondary:hover {
+            background-color: var(--button-secondary-hover);
+        }
+        button.info {
+            background-color: var(--button-info);
+        }
+        button.info:hover {
+            background-color: var(--button-info-hover);
+        }
+        
+        /* Контейнер для таблицы с прокруткой */
+        .table-container {
+            max-height: 750px;
+            overflow-y: auto;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            margin: 15px 0;
+            position: relative;
+            min-height: 200px;
+            transition: border-color 0.3s;
+        }
+        
+        /* Фиксированная шапка таблицы */
+        .table-container table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+            margin: 0;
+            table-layout: fixed;
+        }
+        
+        .table-container thead {
+            position: sticky;
+            top: 0;
+            background-color: var(--table-header-bg);
+            z-index: 10;
+            transition: background-color 0.3s;
+        }
+        
+        .table-container thead th {
+            position: sticky;
+            top: 0;
+            background-color: var(--table-header-bg);
+            color: var(--table-header-text);
+            padding: 14px 10px;
+            border-bottom: 2px solid var(--border-color);
+            font-size: 15px;
+            text-align: center;
+            transition: background-color 0.3s, color 0.3s;
+        }
+        
+        /* Распределение ширины колонок для таблицы сопоставления */
+        .table-container thead th:nth-child(1) { width: 15%; }
+        .table-container thead th:nth-child(2) { width: 25%; }
+        .table-container thead th:nth-child(3) { width: 45%; }
+        .table-container thead th:nth-child(4) { width: 15%; }
+        
+        .table-container tbody td {
+            background-color: var(--table-row-odd);
+            padding: 10px;
+            font-size: 14px;
+            vertical-align: middle;
+            text-align: center;
+            transition: background-color 0.3s;
+        }
+        
+        /* Специально для текстовых ячеек */
+        .table-container tbody td:nth-child(1),
+        .table-container tbody td:nth-child(2),
+        .table-container tbody td:nth-child(3) {
+            text-align: center;
+        }
+        
+        .table-container tbody td:nth-child(4) {
+            text-align: center;
+        }
+        
+        .table-container tbody tr:nth-child(even) td {
+            background-color: var(--table-row-even);
+        }
+        
+        /* Стили для колонок с чекбоксами */
+        .checkbox-col {
+            text-align: center !important;
+            width: 80px;
+            min-width: 80px;
+        }
+        
+        .checkbox-col input[type="checkbox"] {
+            transform: scale(2.0);
+            margin: 8px 0;
+            cursor: pointer;
+            accent-color: var(--button-primary);
+        }
+        
+        .editable-col {
+            text-align: center !important;
+            width: 80px;
+            min-width: 80px;
+        }
+        
+        .editable-col input[type="checkbox"] {
+            transform: scale(2.0);
+            margin: 8px 0;
+            cursor: pointer;
+            accent-color: var(--button-primary);
+        }
+        
+        /* Стиль для нередактируемого текста в таблице */
+        .non-editable-text {
+            padding: 8px 10px;
+            display: block;
+            min-height: 20px;
+            background-color: var(--non-editable-bg);
+            border-radius: 4px;
+            color: var(--non-editable-text);
+            width: 100%;
+            box-sizing: border-box;
+            text-align: center;
+            transition: background-color 0.3s, color 0.3s;
+        }
+        
+        /* Поле ввода на всю ширину ячейки */
+        .editable-input {
+            width: 100%;
+            box-sizing: border-box;
+            border: 1px solid var(--input-border);
+            background-color: var(--input-bg);
+            color: var(--text-color);
+            padding: 8px 10px;
+            border-radius: 4px;
+            font-size: 14px;
+            text-align: center;
+            transition: background-color 0.3s, color 0.3s, border-color 0.3s;
+        }
+        
+        .editable-input:focus {
+            outline: none;
+            border-color: var(--button-primary);
+            box-shadow: 0 0 3px var(--button-primary);
+        }
+        
+        .footer {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: var(--footer-bg);
+            border-radius: 5px;
+            transition: background-color 0.3s;
+        }
+        
+        .generation-options {
+            display: flex;
+            gap: 20px;
+            align-items: center;
+            flex-wrap: wrap;
+            margin: 15px 0;
+        }
+        
+        .generation-options label {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 15px;
+        }
+        
+        .generation-options input[type="checkbox"] {
+            transform: scale(1.5);
+            margin-right: 5px;
+            accent-color: var(--button-primary);
+        }
+        
+        .file-input {
+            display: none;
+        }
+        
+        /* Табы переключения */
+        .tabs-container {
+            margin-top: 20px;
+        }
+        
+        .tabs-header {
+            display: flex;
+            border-bottom: 2px solid var(--table-header-bg);
+            margin-bottom: 20px;
+            transition: border-color 0.3s;
+        }
+        
+        .tab-button {
+            padding: 12px 24px;
+            background-color: var(--tab-inactive-bg);
+            border: none;
+            border-radius: 8px 8px 0 0;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--tab-inactive);
+            transition: all 0.3s;
+            margin-right: 5px;
+        }
+        
+        .tab-button:hover {
+            background-color: var(--tab-hover-bg);
+            color: var(--tab-hover-text);
+        }
+        
+        .tab-button.active {
+            background-color: var(--table-header-bg);
+            color: var(--table-header-text);
+        }
+        
+        .tab-content {
+            display: none;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        /* Внутренние табы для сопоставления */
+        .mapping-tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        
+        .mapping-tab {
+            padding: 10px 20px;
+            background-color: var(--tab-inactive-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s;
+            color: var(--tab-inactive);
+        }
+        
+        .mapping-tab:hover {
+            background-color: var(--tab-hover-bg);
+            color: var(--tab-hover-text);
+        }
+        
+        .mapping-tab.active {
+            background-color: var(--table-header-bg);
+            color: var(--table-header-text);
+            border-color: var(--table-header-bg);
+        }
+        
+        .mapping-table-container {
+            display: none;
+        }
+        
+        .mapping-table-container.active {
+            display: block;
+        }
+        
+        .action-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        
+        .action-bar-left {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+        
+        .action-bar-right {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .loading {
+            display: inline-block;
+            width: 18px;
+            height: 18px;
+            border: 3px solid var(--border-color);
+            border-top: 3px solid var(--button-primary);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-left: 10px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .error-message {
+            color: var(--button-danger);
+            font-size: 13px;
+            margin-top: 5px;
+        }
+        
+        .info-message {
+            color: var(--button-warning);
+            font-size: 15px;
+            margin-left: 15px;
+            display: inline-block;
+        }
+        
+        .solution-container {
+            display: flex;
+            align-items: center;
+            width: 100%;
+            gap: 10px;
+        }
+        
+        .success-message {
+            color: var(--button-success);
+            font-size: 15px;
+            margin-left: 15px;
+            display: inline-block;
+        }
+        
+        .retry-btn {
+            background-color: var(--button-secondary);
+            color: white;
+            border: none;
+            border-radius: 4px;
+            padding: 5px 10px;
+            font-size: 13px;
+            cursor: pointer;
+            margin-left: 10px;
+        }
+        
+        .retry-btn:hover {
+            background-color: var(--button-secondary-hover);
+        }
+        
+        .empty-message {
+            text-align: center;
+            padding: 40px 20px;
+            color: var(--empty-message);
+            font-style: italic;
+            background-color: transparent;
+            font-size: 15px;
+        }
+        
+        /* Информация о количестве строк */
+        .rows-info {
+            font-size: 13px;
+            color: var(--empty-message);
+            margin-top: 8px;
+            text-align: right;
+            font-weight: 500;
+        }
+
+        /* Индикатор загрузки для секции */
+        .section-loading-container {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            margin-left: 10px;
+            font-size: 15px;
+            color: var(--button-primary);
+        }
+
+        .section-loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid var(--border-color);
+            border-top: 3px solid var(--button-primary);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        /* Оверлей загрузки */
+        .loading-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: var(--overlay-bg);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            border-radius: 8px;
+            transition: background-color 0.3s;
+        }
+
+        .loading-spinner {
+            width: 50px;
+            height: 50px;
+            border: 5px solid var(--border-color);
+            border-top: 5px solid var(--button-primary);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        .loading-text {
+            margin-left: 15px;
+            font-size: 16px;
+            color: var(--text-color);
+        }
+
+        .section-title {
+            font-size: 20px;
+            font-weight: bold;
+            color: var(--header-color);
+            margin-bottom: 15px;
+            padding-bottom: 8px;
+            border-bottom: 2px solid var(--table-header-bg);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            transition: color 0.3s, border-color 0.3s;
+        }
+
+        .section-title .section-loading-container span {
+            color: var(--tab-inactive);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Генератор файла для импорта тегов в OPC UA</h1>
+            <div class="header-right">
+                <button id="themeToggle" class="theme-toggle">
+                    <span id="themeIcon">🌙</span> Тёмная тема
+                </button>
+                <button id="infoBtn" class="info-btn">!</button>
+            </div>
+        </div>
+
+        <!-- Информационное модальное окно -->
+        <div id="infoModal" class="modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2>Инструкция по использованию</h2>
+                    <button class="close-btn" id="closeModalBtn">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <h3>Как пользоваться генератором:</h3>
+                    <ol>
+                        <li><strong>Решения:</strong> Загрузите XML файл с решением через кнопку "Добавить". Выберите решение из списка для работы.</li>
+                        <li><strong>Тип объекта:</strong> Выберите тип объекта из списка всех типов, найденных в решении.</li>
+                        <li><strong>Переключение между сопоставлением и объектами:</strong> Используйте вкладки для переключения между таблицами сопоставления и списком объектов.</li>
+                        <li><strong>Сопоставление:</strong> Можно загрузить из CSV или сохранить на сервер.</li>
+                        <li><strong>Объекты:</strong> Используйте кнопку "Выгрузить данные из решения" для загрузки объектов выбранного типа. Также можно загрузить свой список из CSV файла.</li>
+                        <li><strong>Управление чеками:</strong> Используйте кнопки "Убрать чеки"/"Поставить чеки" для быстрого управления всеми чекбоксами, или "Поставить чеки только где есть Головной тег" для выборочной установки.</li>
+                        <li><strong>Генерация:</strong> Выберите нужные опции и нажмите "Сгенерировать" для создания файла импорта.</li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+
+        <!-- Панель 1: Выпадающий список Решения -->
+        <div class="panel">
+            <div class="flex-row">
+                <div style="flex: 2; position: relative;">
+                    <label for="solutionSelect"><strong>Решения:</strong></label>
+                    <div class="solution-container">
+                        <select id="solutionSelect" style="width: 100%;">
+                            <option value="">Загрузка решений...</option>
+                        </select>
+                        <div id="loadingIndicator" class="loading" style="display: none;"></div>
+                        <span id="noSolutionsMessage" class="info-message" style="display: none;">Решения отсутствуют</span>
+                        <span id="successMessage" class="success-message" style="display: none;">✓ Решения загружены</span>
+                    </div>
+                    <div id="errorMessage" class="error-message" style="display: none;">
+                        Ошибка загрузки решений. 
+                        <button id="retryBtn" class="retry-btn">Повторить</button>
+                    </div>
+                </div>
+                <div>
+                    <button id="addSolutionBtn">➕ Добавить</button>
+                    <button id="deleteSolutionBtn" class="danger">🗑️ Удалить</button>
+                    <button id="loadObjectsBtn" class="warning" style="margin-left: 10px;">📂 Выгрузить данные из решения</button>
+                </div>
+            </div>
+
+            <!-- Тип объекта под решениями -->
+            <div style="margin-top: 15px;">
+                <label for="objectTypeSelect"><strong>Тип объекта:</strong></label>
+                <select id="objectTypeSelect" style="width: 400px; margin-left: 10px;">
+                    <option value="">Загрузка типов...</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- Единый блок с табами для переключения -->
+        <div class="panel tabs-container">
+            <div class="tabs-header">
+                <button class="tab-button active" id="tabMappingBtn">Сопоставление</button>
+                <button class="tab-button" id="tabObjectsBtn">Список объектов</button>
+            </div>
+
+            <!-- Контент вкладки Сопоставление -->
+            <div class="tab-content active" id="mappingTabContent">
+                <div class="section-title">
+                    Сопоставление параметров, защит и команд
+                    <div id="mappingSectionLoading" class="section-loading-container" style="display: none;">
+                        <span class="section-loading"></span>
+                        <span>Загрузка шаблонов...</span>
+                    </div>
+                </div>
+                
+                <div class="action-bar">
+                    <div class="action-bar-left">
+                        <div class="mapping-tabs">
+                            <button class="mapping-tab active" data-mapping="params">Параметры</button>
+                            <button class="mapping-tab" data-mapping="protections">Защиты</button>
+                            <button class="mapping-tab" data-mapping="commands">Команды</button>
+                        </div>
+                    </div>
+                    <div class="action-bar-right">
+                        <button id="saveMappingBtn" class="success">💾 Сохранить</button>
+                        <button id="loadMappingCsvBtn" class="warning">📂 Загрузить сопоставление</button>
+                        <button id="toggleMappingChecksBtn" class="secondary">🔲 Убрать чеки</button>
+                    </div>
+                </div>
+
+                <!-- Контейнер для таблиц сопоставления -->
+                <div class="mapping-container">
+                    <!-- Таблица 1: Сопоставление параметров -->
+                    <div id="paramsTableContainer" class="mapping-table-container active">
+                        <div class="table-container">
+                            <table id="paramsTable">
+                                <thead>
+                                    <tr>
+                                        <th>Описание свойства</th>
+                                        <th>Название template</th>
+                                        <th>Кончик сопоставления OPC UA</th>
+                                        <th>Использовать</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td colspan="4" class="empty-message">Загрузка данных...</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Таблица 2: Сопоставление защит -->
+                    <div id="protectionsTableContainer" class="mapping-table-container">
+                        <div class="table-container">
+                            <table id="protectionsTable">
+                                <thead>
+                                    <tr>
+                                        <th>Описание защиты</th>
+                                        <th>Название template</th>
+                                        <th>Кончик сопоставления OPC UA</th>
+                                        <th>Использовать</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td colspan="4" class="empty-message">Загрузка данных...</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Таблица 3: Сопоставление команд -->
+                    <div id="commandsTableContainer" class="mapping-table-container">
+                        <div class="table-container">
+                            <table id="commandsTable">
+                                <thead>
+                                    <tr>
+                                        <th>Описание команды</th>
+                                        <th>Название template</th>
+                                        <th>Кончик сопоставления OPC UA</th>
+                                        <th>Использовать</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td colspan="4" class="empty-message">Загрузка данных...</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Информация о количестве строк -->
+                <div id="mappingRowsInfo" class="rows-info"></div>
+            </div>
+
+            <!-- Контент вкладки Список объектов -->
+            <div class="tab-content" id="objectsTabContent">
+                <div class="section-title">Список объектов</div>
+                
+                <div class="action-bar">
+                    <div class="action-bar-left">
+                        <button id="refreshObjectsBtn" class="success">🔄 Обновить</button>
+                        <button id="loadObjectsCsvBtn" class="info">📁 Добавить свой список</button>
+                        <button id="saveObjectsCsvBtn" class="info">💾 Выгрузить список объектов</button>
+                    </div>
+                    <div class="action-bar-right">
+                        <button id="toggleObjectsChecksBtn" class="secondary">🔲 Убрать чеки</button>
+                        <button id="toggleObjectsChecksWithTagBtn" class="info">✅ Поставить чеки только где есть Головной тег</button>
+                    </div>
+                </div>
+
+                <!-- Контейнер для таблицы объектов с прокруткой -->
+                <div class="table-container">
+                    <table id="objectsTable">
+                        <thead>
+                            <tr>
+                                <th>Id объекта</th>
+                                <th>Название</th>
+                                <th>Головной тег OPC UA</th>
+                                <th>Использовать</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td colspan="4" class="empty-message">Нажмите "Выгрузить данные из решения" для загрузки объектов</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                
+                <!-- Информация о количестве строк -->
+                <div id="objectsRowsInfo" class="rows-info"></div>
+            </div>
+        </div>
+
+        <!-- Нижняя панель: Генерация -->
+        <div class="footer">
+            <h2>Генерация</h2>
+            <div class="generation-options">
+                <label><input type="checkbox" id="genHeadTags" checked> Головные теги</label>
+                <label><input type="checkbox" id="genProperties" checked> Свойства</label>
+                <label><input type="checkbox" id="genCommands" checked> Команды</label>
+                <label><input type="checkbox" id="genProtections" checked> Защиты</label>
+            </div>
+            <button id="generateBtn" style="padding: 12px 24px; font-size: 16px;">⚡ Сгенерировать объекты</button>
+        </div>
+    </div>
+
+    <!-- Скрытый input для загрузки файлов -->
+    <input type="file" id="fileInput" class="file-input" accept=".xml">
+
+    <!-- Скрытый input для загрузки CSV файлов сопоставления -->
+    <input type="file" id="csvFileInput" class="file-input" accept=".csv,.txt">
+
+    <!-- Скрытый input для загрузки CSV файлов объектов -->
+    <input type="file" id="objectsCsvFileInput" class="file-input" accept=".csv,.txt">
+
+    <!-- Оверлей загрузки -->
+    <div id="loadingOverlay" class="loading-overlay" style="display: none;">
+        <div class="loading-spinner"></div>
+        <span class="loading-text">Загрузка данных...</span>
+    </div>
+
+    <script>
+        // DOM элементы
+        const solutionSelect = document.getElementById('solutionSelect');
+        const addSolutionBtn = document.getElementById('addSolutionBtn');
+        const deleteSolutionBtn = document.getElementById('deleteSolutionBtn');
+        const loadObjectsBtn = document.getElementById('loadObjectsBtn');
+        const objectTypeSelect = document.getElementById('objectTypeSelect');
+        const refreshObjectsBtn = document.getElementById('refreshObjectsBtn');
+        const loadObjectsCsvBtn = document.getElementById('loadObjectsCsvBtn');
+        const saveObjectsCsvBtn = document.getElementById('saveObjectsCsvBtn');
+        const generateBtn = document.getElementById('generateBtn');
+        const fileInput = document.getElementById('fileInput');
+        const csvFileInput = document.getElementById('csvFileInput');
+        const objectsCsvFileInput = document.getElementById('objectsCsvFileInput');
+        const infoBtn = document.getElementById('infoBtn');
+        const infoModal = document.getElementById('infoModal');
+        const closeModalBtn = document.getElementById('closeModalBtn');
+        const saveMappingBtn = document.getElementById('saveMappingBtn');
+        const loadMappingCsvBtn = document.getElementById('loadMappingCsvBtn');
+        const toggleMappingChecksBtn = document.getElementById('toggleMappingChecksBtn');
+        const toggleObjectsChecksBtn = document.getElementById('toggleObjectsChecksBtn');
+        const toggleObjectsChecksWithTagBtn = document.getElementById('toggleObjectsChecksWithTagBtn');
+        const loadingIndicator = document.getElementById('loadingIndicator');
+        const errorMessage = document.getElementById('errorMessage');
+        const noSolutionsMessage = document.getElementById('noSolutionsMessage');
+        const successMessage = document.getElementById('successMessage');
+        const retryBtn = document.getElementById('retryBtn');
+        const mappingRowsInfo = document.getElementById('mappingRowsInfo');
+        const objectsRowsInfo = document.getElementById('objectsRowsInfo');
+        const mappingSectionLoading = document.getElementById('mappingSectionLoading');
+        const loadingOverlay = document.getElementById('loadingOverlay');
+        const themeToggle = document.getElementById('themeToggle');
+        const themeIcon = document.getElementById('themeIcon');
+
+        // Табы
+        const tabMappingBtn = document.getElementById('tabMappingBtn');
+        const tabObjectsBtn = document.getElementById('tabObjectsBtn');
+        const mappingTabContent = document.getElementById('mappingTabContent');
+        const objectsTabContent = document.getElementById('objectsTabContent');
+
+        // Таблицы
+        const paramsTable = document.getElementById('paramsTable');
+        const protectionsTable = document.getElementById('protectionsTable');
+        const commandsTable = document.getElementById('commandsTable');
+        const objectsTable = document.getElementById('objectsTable').querySelector('tbody');
+
+        // Контейнеры таблиц сопоставления
+        const paramsTableContainer = document.getElementById('paramsTableContainer');
+        const protectionsTableContainer = document.getElementById('protectionsTableContainer');
+        const commandsTableContainer = document.getElementById('commandsTableContainer');
+
+        // Кнопки переключения типов сопоставления
+        const mappingTabs = document.querySelectorAll('.mapping-tab');
+
+        // Состояние кнопок
+        let mappingChecksState = true;
+        let objectsChecksState = true;
+
+        // Хранилище загруженных данных
+        let loadedTemplates = null;
+        let loadedObjects = null;
+        let allObjectTypes = [];
+
+        // Флаг, были ли загружены шаблоны при старте
+        let templatesLoaded = false;
+
+        // Текущий активный тип сопоставления
+        let currentMappingType = 'params';
+
+        // Базовый URL сервера
+        const SERVER_URL = window.location.origin;
+
+        // Маппинг английских названий типов на русские
+        const objectTypeMapping = {
+            'Pipe': 'Труба',
+            'TechnologicalArea': 'ТУ',
+            'CentralProtectionSystem': 'ЦСПА',
+            'Sensor': 'Датчик',
+            'TankBattery': 'Резервуарный парк',
+            'ShopMainstream': 'МНС',
+            'BoosterPump': 'ПНА',
+            'InputUnitAdditives': 'УВП (Узел ввода присадки)',
+            'UnitMeasureQuality': 'БИК',
+            'LeakDetectionSystem': 'СОУ',
+            'CompositePumpStation': 'ЛПДС',
+            'LeaseAutomaticCustodyTransfer': 'СИКН (УЗР)',
+            'TankGroup': 'Группа резервуаров',
+            'Pipeline': 'Сегмент МТ',
+            'CleanDiagnSystemCameraSensor': 'Датчик СОД',
+            'PipelineTieIn': 'Врезка в ЛУ',
+            'ReliefValve': 'ПК (Предохранительный клапан)',
+            'Enter': 'Поставщик',
+            'Valve': 'Задвижка',
+            'CleanDiagnSystemCamera': 'КПСОД',
+            'BackValve': 'Обратный клапан',
+            'TankDump': 'ЕП (РГС, РВС) (Ёмкость подземная)',
+            'LeakPump': 'НОУ (Насос откачки утечек)',
+            'ShopBooster': 'ПНС',
+            'Filter': 'ФГУ (Фильтр грязеуловитель)',
+            'PumpStation': 'НПС',
+            'Bridge': 'Перемычка (Соединительное звено между объектами)',
+            'PressureControlShop': 'УРД',
+            'PipelinePump': 'МНА',
+            'PressureControlUnit': 'РД (Заслонка)',
+            'PointOilHeating': 'ППН (Пункт подогрева нефти)',
+            'Exit': 'Потребитель',
+            'Tank': 'Резервуар',
+            'CompositeGeneralObject': 'Составной объект (СППК, ССВД, ФГУ, МН, Манифольд, СИКН, ПСП, РМ ПМ)',
+            'UnityHydraulicSystem': 'ЕГС (Единая гидравлическая система)',
+            'LinearPartOfTrunkPipeline': 'ЛЧ МТ',
+            'CleanDiagnSystemCameraPass': 'КП СОД (с флажком)',
+            'StationFrequencyConrolSystem': 'МПСА НПС (ЧРП)',
+            'ControlPointTelemechanics': 'КП ТМ (Колодец)'
+        };
+
+        // Функция для получения русского названия типа объекта
+        function getLocalizedObjectType(englishType) {
+            return objectTypeMapping[englishType] || englishType;
+        }
+
+        // Функция для переключения темы
+        function toggleTheme() {
+            const currentTheme = document.documentElement.getAttribute('data-theme');
+            if (currentTheme === 'dark') {
+                document.documentElement.removeAttribute('data-theme');
+                themeIcon.textContent = '🌙';
+                themeToggle.innerHTML = '<span id="themeIcon">🌙</span> Тёмная тема';
+                localStorage.setItem('theme', 'light');
+            } else {
+                document.documentElement.setAttribute('data-theme', 'dark');
+                themeIcon.textContent = '☀️';
+                themeToggle.innerHTML = '<span id="themeIcon">☀️</span> Светлая тема';
+                localStorage.setItem('theme', 'dark');
+            }
+        }
+
+        // Загрузка сохранённой темы
+        function loadSavedTheme() {
+            const savedTheme = localStorage.getItem('theme');
+            if (savedTheme === 'dark') {
+                document.documentElement.setAttribute('data-theme', 'dark');
+                themeIcon.textContent = '☀️';
+                themeToggle.innerHTML = '<span id="themeIcon">☀️</span> Светлая тема';
+            }
+        }
+
+        // Функция для показа/скрытия оверлея загрузки
+        function setLoading(isLoading, message = 'Загрузка данных...') {
+            if (isLoading) {
+                loadingOverlay.querySelector('.loading-text').textContent = message;
+                loadingOverlay.style.display = 'flex';
+            } else {
+                loadingOverlay.style.display = 'none';
+            }
+        }
+
+        // Переключение между табами (Сопоставление / Список объектов)
+        tabMappingBtn.addEventListener('click', () => {
+            tabMappingBtn.classList.add('active');
+            tabObjectsBtn.classList.remove('active');
+            mappingTabContent.classList.add('active');
+            objectsTabContent.classList.remove('active');
+        });
+
+        tabObjectsBtn.addEventListener('click', () => {
+            tabObjectsBtn.classList.add('active');
+            tabMappingBtn.classList.remove('active');
+            objectsTabContent.classList.add('active');
+            mappingTabContent.classList.remove('active');
+        });
+
+        // Переключение между типами сопоставления
+        mappingTabs.forEach(tab => {
+            tab.addEventListener('click', () => {
+                mappingTabs.forEach(t => t.classList.remove('active'));
+                tab.classList.add('active');
+                
+                const mappingType = tab.dataset.mapping;
+                currentMappingType = mappingType;
+                
+                paramsTableContainer.classList.remove('active');
+                protectionsTableContainer.classList.remove('active');
+                commandsTableContainer.classList.remove('active');
+                
+                switch(mappingType) {
+                    case 'params':
+                        paramsTableContainer.classList.add('active');
+                        break;
+                    case 'protections':
+                        protectionsTableContainer.classList.add('active');
+                        break;
+                    case 'commands':
+                        commandsTableContainer.classList.add('active');
+                        break;
+                }
+                
+                updateRowsInfo();
+            });
+        });
+
+        // Функция для загрузки шаблонов
+        async function loadTemplates() {
+            try {
+                mappingSectionLoading.style.display = 'inline-flex';
+                
+                console.log('Загрузка шаблонов...');
+                
+                const response = await fetch(`${SERVER_URL}/GetTemplate`, {
+                    method: 'GET',
+                    mode: 'cors',
+                    headers: {
+                        'Accept': 'application/json'
+                    }
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP ошибка! Статус: ${response.status}`);
+                }
+
+                const data = await response.json();
+                console.log('Получены шаблоны:', data);
+                
+                loadedTemplates = data;
+                templatesLoaded = true;
+
+                updateObjectTypesDropdown();
+
+                const templateTypes = Object.keys(data);
+                if (templateTypes.length > 0 && objectTypeSelect.options.length > 0) {
+                    if (!objectTypeSelect.value || objectTypeSelect.value === '') {
+                        objectTypeSelect.value = objectTypeSelect.options[0].value;
+                    }
+                    displayTemplatesForType(objectTypeSelect.value, data);
+                } else {
+                    showEmptyMappingTables();
+                }
+
+            } catch (error) {
+                console.error('Ошибка при загрузке шаблонов:', error);
+                templatesLoaded = false;
+                showEmptyMappingTables();
+            } finally {
+                mappingSectionLoading.style.display = 'none';
+            }
+        }
+
+        // Функция для сохранения сопоставления
+        async function saveMapping() {
+            const selectedObjectType = objectTypeSelect.value;
+
+            if (!selectedObjectType || selectedObjectType === '') {
+                alert('Пожалуйста, выберите тип объекта');
+                return;
+            }
+
+            // Получаем активную таблицу
+            const activeTable = getActiveMappingTable();
+            if (!activeTable) {
+                alert('Не удалось определить активную таблицу');
+                return;
+            }
+
+            // Собираем данные из таблицы
+            const rows = activeTable.querySelectorAll('tbody tr');
+            const mappingData = [];
+
+            console.log('Сбор данных из таблицы, найдено строк:', rows.length);
+
+            rows.forEach((row, index) => {
+                if (row.querySelector('.empty-message')) return;
+
+                const descriptionCell = row.querySelector('td:nth-child(2)');
+                const opcUaInput = row.querySelector('td:nth-child(3) input');
+                const useCheckbox = row.querySelector('td:last-child input');
+
+                let description = '';
+                let opcUaPath = '';
+                let use = true;
+
+                if (descriptionCell) {
+                    description = descriptionCell.textContent?.trim() || '';
+                }
+
+                if (opcUaInput) {
+                    opcUaPath = opcUaInput.value?.trim() || '';
+                }
+
+                if (useCheckbox) {
+                    use = useCheckbox.checked;
+                }
+
+                if (description && opcUaPath) {
+                    mappingData.push({
+                        Description: description,
+                        OpcUaPath: opcUaPath,
+                        Use: use
+                    });
+                }
+            });
+
+            console.log('Собранные данные для сохранения:', mappingData);
+
+            if (mappingData.length === 0) {
+                alert('Нет данных для сохранения');
+                return;
+            }
+
+            // Формируем данные для отправки
+            const saveData = {
+                ObjectType: selectedObjectType,
+                MappingType: currentMappingType,
+                Data: mappingData
+            };
+
+            console.log('Отправка данных на сохранение:', JSON.stringify(saveData, null, 2));
+
+            try {
+                setLoading(true, 'Сохранение сопоставления...');
+
+                // Проверяем доступность сервера перед отправкой
+                const testResponse = await fetch(`${SERVER_URL}/getAllSolution`, {
+                    method: 'GET',
+                    mode: 'cors'
+                }).catch(() => null);
+
+                if (!testResponse || !testResponse.ok) {
+                    throw new Error('Сервер недоступен. Проверьте соединение.');
+                }
+
+                // Отправляем запрос на сохранение
+                const response = await fetch(`${SERVER_URL}/SaveTemplates`, {
+                    method: 'POST',
+                    mode: 'cors',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(saveData)
+                });
+
+                console.log('Статус ответа:', response.status);
+                console.log('Заголовки ответа:', [...response.headers.entries()]);
+
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    console.error('Текст ошибки:', errorText);
+                    throw new Error(`HTTP ошибка! Статус: ${response.status}`);
+                }
+
+                const result = await response.json();
+                console.log('Результат сохранения:', result);
+                
+                alert(`Сопоставление успешно сохранено. Сохранено записей: ${result.count}`);
+
+            } catch (error) {
+                console.error('Ошибка при сохранении:', error);
+
+                let errorMessage = 'Ошибка при сохранении: ' + error.message;
+
+                if (error.message.includes('Сервер недоступен')) {
+                    errorMessage = '❌ Сервер недоступен. Убедитесь, что:\n' +
+                        '1. Сервер запущен на порту 8080\n' +
+                        '2. Нет блокировки CORS\n' +
+                        '3. Адрес http://127.0.0.1:8080 доступен';
+                }
+
+                alert(errorMessage);
+            } finally {
+                setLoading(false);
+            }
+        }
+
+        // Функция для загрузки сопоставления из CSV файла
+        function loadMappingFromCsv() {
+            csvFileInput.accept = '.csv,.txt';
+            csvFileInput.click();
+        }
+
+        // Обработка загруженного CSV файла сопоставления
+        csvFileInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                parseCsvFile(file, 'mapping');
+            }
+            csvFileInput.value = '';
+        });
+
+        // Функция для загрузки CSV файла объектов
+        function loadObjectsFromCsv() {
+            objectsCsvFileInput.accept = '.csv,.txt';
+            objectsCsvFileInput.click();
+        }
+
+        // Обработка загруженного CSV файла объектов
+        objectsCsvFileInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                parseCsvFile(file, 'objects');
+            }
+            objectsCsvFileInput.value = '';
+        });
+
+        // Функция для парсинга CSV файла
+        function parseCsvFile(file, type) {
+            const reader = new FileReader();
+            
+            reader.onload = (event) => {
+                const content = event.target.result;
+                const lines = content.split('\n').filter(line => line.trim() !== '');
+                
+                let delimiter = '\t';
+                if (content.includes(',')) delimiter = ',';
+                else if (content.includes(';')) delimiter = ';';
+                
+                const data = [];
+                
+                lines.forEach(line => {
+                    const parts = line.split(delimiter).map(part => part.trim());
+                    if (parts.length >= 2) {
+                        data.push({
+                            id: parts[0],
+                            value: parts[1]
+                        });
+                    }
+                });
+                
+                if (data.length === 0) {
+                    alert('Файл не содержит данных или имеет неподдерживаемый формат');
+                    return;
+                }
+                
+                console.log(`Загружено из CSV (${type}):`, data);
+                
+                if (type === 'mapping') {
+                    // Загрузка в таблицу сопоставления
+                    const activeTable = getActiveMappingTable();
+                    const tbody = activeTable?.querySelector('tbody');
+                    
+                    if (tbody) {
+                        tbody.innerHTML = '';
+                        
+                        data.forEach(item => {
+                            const row = document.createElement('tr');
+                            row.innerHTML = `
+                                <td></td>
+                                <td class="non-editable-text">${escapeHtml(item.id)}</td>
+                                <td><input type="text" class="editable-input" value="${escapeHtml(item.value)}"></td>
+                                <td class="editable-col"><input type="checkbox" checked></td>
+                            `;
+                            tbody.appendChild(row);
+                        });
+                        
+                        mappingChecksState = true;
+                        updateButtonText(toggleMappingChecksBtn, mappingChecksState);
+                        
+                        updateRowsInfo();
+                        
+                        alert(`Загружено ${data.length} строк в таблицу сопоставления`);
+                    }
+                } else if (type === 'objects') {
+                    // Загрузка в таблицу объектов
+                    if (objectsTable) {
+                        objectsTable.innerHTML = '';
+                        
+                        data.forEach(item => {
+                            const row = document.createElement('tr');
+                            row.innerHTML = `
+                                <td>${escapeHtml(item.id)}</td>
+                                <td></td>
+                                <td><input type="text" class="editable-input" value="${escapeHtml(item.value)}"></td>
+                                <td class="checkbox-col"><input type="checkbox" checked></td>
+                            `;
+                            objectsTable.appendChild(row);
+                        });
+                        
+                        objectsChecksState = true;
+                        updateButtonText(toggleObjectsChecksBtn, objectsChecksState);
+                        
+                        updateRowsInfo();
+                        
+                        alert(`Загружено ${data.length} объектов из CSV файла`);
+                    }
+                }
+            };
+            
+            reader.readAsText(file);
+        }
+
+        // Функция для обновления выпадающего списка типов объектов
+        function updateObjectTypesDropdown() {
+            const currentValue = objectTypeSelect.value;
+            
+            objectTypeSelect.innerHTML = '';
+            
+            const allTypes = new Set();
+            
+            if (loadedTemplates) {
+                Object.keys(loadedTemplates).forEach(type => allTypes.add(type));
+            }
+            
+            if (loadedObjects) {
+                Object.keys(loadedObjects).forEach(type => allTypes.add(type));
+            }
+            
+            const typesArray = Array.from(allTypes).sort();
+            allObjectTypes = typesArray;
+            
+            console.log('Все доступные типы объектов:', typesArray);
+            
+            if (typesArray.length === 0) {
+                const option = document.createElement('option');
+                option.value = '';
+                option.textContent = 'Нет типов объектов';
+                objectTypeSelect.appendChild(option);
+                return;
+            }
+            
+            typesArray.forEach(type => {
+                const option = document.createElement('option');
+                option.value = type;
+                // Используем маппинг для отображения русского названия
+                option.textContent = getLocalizedObjectType(type);
+                objectTypeSelect.appendChild(option);
+            });
+            
+            if (currentValue && typesArray.includes(currentValue)) {
+                objectTypeSelect.value = currentValue;
+            }
+            
+            console.log('Обновлен список типов объектов');
+        }
+
+        // Функция для отображения шаблонов для конкретного типа
+        function displayTemplatesForType(type, templates) {
+            console.log('Отображаем шаблоны для типа:', type);
+            
+            if (!templates || !templates[type]) {
+                console.log('Нет шаблонов для типа:', type);
+                showEmptyMappingTables();
+                return;
+            }
+
+            const typeData = templates[type];
+            
+            if (typeData.params && typeData.params.length > 0) {
+                fillMappingTable('params', typeData.params);
+            } else {
+                showEmptyMappingTable('params');
+            }
+            
+            if (typeData.protections && typeData.protections.length > 0) {
+                fillMappingTable('protections', typeData.protections);
+            } else {
+                showEmptyMappingTable('protections');
+            }
+            
+            if (typeData.commands && typeData.commands.length > 0) {
+                fillMappingTable('commands', typeData.commands);
+            } else {
+                showEmptyMappingTable('commands');
+            }
+
+            mappingChecksState = true;
+            updateButtonText(toggleMappingChecksBtn, mappingChecksState);
+            
+            updateRowsInfo();
+        }
+
+        // Функция для обновления информации о количестве строк
+        function updateRowsInfo() {
+            const activeTable = getActiveMappingTable();
+            if (activeTable) {
+                const tbody = activeTable.querySelector('tbody');
+                const rows = tbody.querySelectorAll('tr:not(.empty-message)').length;
+                mappingRowsInfo.textContent = rows > 0 ? `Всего строк: ${rows}` : '';
+            }
+
+            if (objectsTable) {
+                const rows = objectsTable.querySelectorAll('tr:not(.empty-message)').length;
+                objectsRowsInfo.textContent = rows > 0 ? `Всего объектов: ${rows}` : '';
+            }
+        }
+
+        // Функция для получения активной таблицы сопоставления
+        function getActiveMappingTable() {
+            switch(currentMappingType) {
+                case 'params': return paramsTable;
+                case 'protections': return protectionsTable;
+                case 'commands': return commandsTable;
+                default: return null;
+            }
+        }
+
+        // Функция для загрузки решений с сервера
+        async function loadSolutions() {
+            try {
+                loadingIndicator.style.display = 'inline-block';
+                noSolutionsMessage.style.display = 'none';
+                successMessage.style.display = 'none';
+                errorMessage.style.display = 'none';
+                solutionSelect.innerHTML = '<option value="">Загрузка решений...</option>';
+
+                const response = await fetch(`${SERVER_URL}/getAllSolution`, {
+                    method: 'GET',
+                    mode: 'cors',
+                    headers: {
+                        'Accept': 'application/json'
+                    }
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ошибка! Статус: ${response.status}`);
+                }
+                
+                const text = await response.text();
+                if (!text) {
+                    throw new Error('Пустой ответ от сервера');
+                }
+                
+                const solutions = JSON.parse(text);
+                console.log('Получены решения:', solutions);
+                
+                solutionSelect.innerHTML = '';
+                
+                if (solutions && solutions.length > 0) {
+                    solutions.forEach(solution => {
+                        const option = document.createElement('option');
+                        option.value = solution.NameFile;
+                        option.textContent = solution.Discript;
+                        solutionSelect.appendChild(option);
+                    });
+                    noSolutionsMessage.style.display = 'none';
+                    successMessage.style.display = 'inline-block';
+                    
+                    setTimeout(() => {
+                        successMessage.style.display = 'none';
+                    }, 3000);
+                    
+                    return solutions;
+                } else {
+                    solutionSelect.innerHTML = '<option value="">Нет доступных решений</option>';
+                    noSolutionsMessage.style.display = 'inline-block';
+                    successMessage.style.display = 'none';
+                    return [];
+                }
+                
+            } catch (error) {
+                console.error('Ошибка при загрузке решений:', error);
+                errorMessage.style.display = 'block';
+                solutionSelect.innerHTML = '<option value="">Ошибка загрузки</option>';
+                noSolutionsMessage.style.display = 'none';
+                successMessage.style.display = 'none';
+                throw error;
+            } finally {
+                loadingIndicator.style.display = 'none';
+            }
+        }
+
+        // Обработчик изменения выбранного решения
+        solutionSelect.addEventListener('change', async (e) => {
+            console.log('Выбрано решение:', e.target.value);
+            if (e.target.value && e.target.value !== 'Нет доступных решений' && e.target.value !== 'Ошибка загрузки') {
+                await loadTemplates();
+            }
+        });
+
+        // Функция для загрузки объектов из решения
+        async function loadObjectsFromSolution() {
+            const selectedSolution = solutionSelect.value;
+            
+            if (!selectedSolution || selectedSolution === 'Нет доступных решений' || selectedSolution === 'Ошибка загрузки') {
+                alert('Пожалуйста, выберите решение');
+                return;
+            }
+
+            try {
+                setLoading(true, 'Загрузка объектов из решения...');
+                
+                console.log('Отправка запроса для файла:', selectedSolution);
+                
+                const response = await fetch(`${SERVER_URL}/GetTypeObjects`, {
+                    method: 'POST',
+                    mode: 'cors',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        filename: selectedSolution
+                    })
+                });
+
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    throw new Error(`HTTP ошибка! Статус: ${response.status}, ${errorText}`);
+                }
+
+                const data = await response.json();
+                console.log('Получены объекты от сервера:', data);
+
+                loadedObjects = data;
+                updateObjectTypesDropdown();
+
+                const currentObjectType = objectTypeSelect.value;
+                
+                if (currentObjectType && data[currentObjectType]) {
+                    displayObjectsForType(currentObjectType, data);
+                } else if (allObjectTypes.length > 0) {
+                    const firstType = allObjectTypes[0];
+                    objectTypeSelect.value = firstType;
+                    
+                    if (loadedTemplates && loadedTemplates[firstType]) {
+                        displayTemplatesForType(firstType, loadedTemplates);
+                    }
+                    
+                    if (data[firstType]) {
+                        displayObjectsForType(firstType, data);
+                    }
+                }
+
+                alert('Объекты успешно загружены');
+
+            } catch (error) {
+                console.error('Ошибка при загрузке объектов:', error);
+                alert(`Ошибка при загрузке объектов: ${error.message}`);
+            } finally {
+                setLoading(false);
+            }
+        }
+
+        // Функция для отображения объектов для конкретного типа
+        function displayObjectsForType(objectType, objectsData) {
+            console.log('Отображаем объекты для типа:', objectType);
+            
+            if (!objectsData || !objectsData[objectType]) {
+                console.log('Нет объектов для типа:', objectType);
+                showEmptyObjectsTable();
+                return;
+            }
+
+            const typeData = objectsData[objectType];
+            
+            if (typeData.objects && typeData.objects.length > 0) {
+                console.log('Загружено объектов:', typeData.objects.length);
+                fillObjectsTable(typeData.objects);
+            } else {
+                showEmptyObjectsTable();
+            }
+
+            objectsChecksState = true;
+            updateButtonText(toggleObjectsChecksBtn, objectsChecksState);
+            
+            updateRowsInfo();
+        }
+
+        // Функция для установки чекбоксов только у объектов с заполненным тегом
+        function toggleChecksOnlyWithTag() {
+            if (!objectsTable) return;
+            
+            const rows = objectsTable.querySelectorAll('tr');
+            let checkedCount = 0;
+            let totalWithTag = 0;
+            
+            rows.forEach(row => {
+                if (row.querySelector('.empty-message')) return;
+                
+                const tagInput = row.querySelector('td:nth-child(3) input');
+                const checkbox = row.querySelector('td:last-child input[type="checkbox"]');
+                
+                if (tagInput && checkbox) {
+                    const hasTag = tagInput.value?.trim() !== '';
+                    if (hasTag) {
+                        totalWithTag++;
+                        checkbox.checked = true;
+                        checkedCount++;
+                    } else {
+                        checkbox.checked = false;
+                    }
+                }
+            });
+            
+            objectsChecksState = false; // После этой операции состояние "все отмечены" сбрасывается
+            updateButtonText(toggleObjectsChecksBtn, objectsChecksState);
+            
+            alert(`Установлены чекбоксы для ${checkedCount} объектов с заполненным Головным тегом из ${totalWithTag} найденных`);
+            updateRowsInfo();
+        }
+
+        function showEmptyMappingTables() {
+            const tables = ['params', 'protections', 'commands'];
+            tables.forEach(tableType => {
+                showEmptyMappingTable(tableType);
+            });
+        }
+
+        function showEmptyMappingTable(tableType) {
+            const tbody = getTableBody(tableType);
+            if (tbody) {
+                tbody.innerHTML = '<tr><td colspan="4" class="empty-message">Нет данных для отображения</td></tr>';
+            }
+        }
+
+        function showEmptyObjectsTable() {
+            if (objectsTable) {
+                objectsTable.innerHTML = '<tr><td colspan="4" class="empty-message">Нет объектов для отображения</td></tr>';
+            }
+        }
+
+        function getTableBody(tableType) {
+            switch(tableType) {
+                case 'params': return paramsTable?.querySelector('tbody');
+                case 'protections': return protectionsTable?.querySelector('tbody');
+                case 'commands': return commandsTable?.querySelector('tbody');
+                default: return null;
+            }
+        }
+
+        function fillMappingTable(tableType, data) {
+            const tbody = getTableBody(tableType);
+            if (!tbody) return;
+            
+            console.log(`Заполнение таблицы ${tableType} данными:`, data);
+            
+            tbody.innerHTML = '';
+            
+            if (!data || data.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="4" class="empty-message">Нет данных для отображения</td></tr>';
+                return;
+            }
+            
+            data.forEach(item => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td></td>
+                    <td class="non-editable-text">${escapeHtml(item.description || item.Description || '')}</td>
+                    <td><input type="text" class="editable-input" value="${escapeHtml(item.opcUaPath || item.OPCUAPath || '')}"></td>
+                    <td class="editable-col"><input type="checkbox" ${item.use ? 'checked' : ''}></td>
+                `;
+                tbody.appendChild(row);
+            });
+            
+            console.log(`Таблица ${tableType} заполнена, строк:`, data.length);
+        }
+
+        function fillObjectsTable(objects) {
+            if (!objectsTable) return;
+            
+            console.log('Заполнение таблицы объектов данными:', objects);
+            
+            objectsTable.innerHTML = '';
+            
+            if (!objects || objects.length === 0) {
+                objectsTable.innerHTML = '<tr><td colspan="4" class="empty-message">Нет объектов для отображения</td></tr>';
+                return;
+            }
+            
+            objects.forEach(obj => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${escapeHtml(obj.id || '')}</td>
+                    <td>${escapeHtml(obj.name || '')}</td>
+                    <td><input type="text" class="editable-input" value="${escapeHtml(obj.tag || '')}"></td>
+                    <td class="checkbox-col"><input type="checkbox" ${obj.use ? 'checked' : ''}></td>
+                `;
+                objectsTable.appendChild(row);
+            });
+            
+            console.log('Таблица объектов заполнена, строк:', objects.length);
+        }
+
+        function escapeHtml(unsafe) {
+            if (!unsafe) return '';
+            return unsafe
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
+        }
+
+        async function uploadSolution(file) {
+            try {
+                setLoading(true, 'Загрузка файла на сервер...');
+                
+                const formData = new FormData();
+                formData.append('file', file);
+                
+                const response = await fetch(`${SERVER_URL}/AddSolution`, {
+                    method: 'POST',
+                    mode: 'cors',
+                    body: formData
+                });
+                
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    throw new Error(`HTTP ошибка! Статус: ${response.status}, ${errorText}`);
+                }
+                
+                const result = await response.json();
+                console.log('Результат загрузки:', result);
+                
+                alert(`Файл "${file.name}" успешно загружен на сервер`);
+                
+                await loadSolutions();
+                await loadTemplates();
+                
+            } catch (error) {
+                console.error('Ошибка при загрузке файла:', error);
+                alert(`Ошибка при загрузке файла: ${error.message}`);
+            } finally {
+                setLoading(false);
+            }
+        }
+
+        function toggleChecksInTable(tableBody, setChecked) {
+            if (!tableBody) return;
+            const checkboxes = tableBody.querySelectorAll('td:last-child input[type="checkbox"]');
+            checkboxes.forEach(checkbox => {
+                checkbox.checked = setChecked;
+            });
+        }
+
+        function toggleChecksInActiveMappingTable(setChecked) {
+            const activeTable = getActiveMappingTable();
+            if (activeTable) {
+                const tbody = activeTable.querySelector('tbody');
+                if (tbody && !tbody.querySelector('.empty-message')) {
+                    toggleChecksInTable(tbody, setChecked);
+                }
+            }
+        }
+
+        function updateButtonText(button, state) {
+            if (state) {
+                button.innerHTML = '✅ Поставить чеки';
+                button.classList.remove('secondary');
+                button.classList.add('success');
+            } else {
+                button.innerHTML = '🔲 Убрать чеки';
+                button.classList.remove('success');
+                button.classList.add('secondary');
+            }
+        }
+
+        // Функция для генерации объектов
+        async function generateObjects() {
+            const selectedObjectType = objectTypeSelect.value;
+            
+            if (!selectedObjectType || selectedObjectType === '') {
+                alert('Пожалуйста, выберите тип объекта');
+                return;
+            }
+
+            // Проверяем, выбрано ли решение
+            if (!solutionSelect.value || solutionSelect.value === 'Нет доступных решений' || solutionSelect.value === 'Ошибка загрузки') {
+                alert('Пожалуйста, выберите решение');
+                return;
+            }
+
+            // Получаем состояние чекбоксов опций
+            const options = {
+                headTags: document.getElementById('genHeadTags').checked,
+                properties: document.getElementById('genProperties').checked,
+                commands: document.getElementById('genCommands').checked,
+                protections: document.getElementById('genProtections').checked
+            };
+
+            // Проверяем, что выбрана хотя бы одна опция
+            if (!options.headTags && !options.properties && !options.commands && !options.protections) {
+                alert('Выберите хотя бы одну опцию генерации');
+                return;
+            }
+
+            // Собираем данные из таблицы объектов (только с чекбоксами)
+            const objectsList = [];
+            const objectRows = objectsTable.querySelectorAll('tr');
+            
+            objectRows.forEach(row => {
+                if (row.querySelector('.empty-message')) return;
+                
+                const checkbox = row.querySelector('td:last-child input[type="checkbox"]');
+                const tagInput = row.querySelector('td:nth-child(3) input');
+                const id = row.cells?.[0]?.innerText?.trim() || '';
+                const tag = tagInput?.value?.trim() || '';
+                
+                if (checkbox && checkbox.checked) {
+                    // Проверяем, что заполнен головной тег
+                    if (!tag) {
+                        alert(`У объекта с ID "${id}" не заполнен Головной тег OPC UA. Пожалуйста, заполните его перед генерацией.`);
+                        throw new Error('Empty tag'); // Прерываем выполнение
+                    }
+                    objectsList.push({ id, tag });
+                }
+            });
+
+            if (objectsList.length === 0) {
+                alert('Нет выбранных объектов для генерации');
+                return;
+            }
+
+            // Формируем тело запроса
+            const requestBody = {
+                filename: solutionSelect.value,
+                objectType: selectedObjectType,
+                options: options,
+                objects: objectsList
+            };
+
+            // Добавляем данные из сопоставлений, если выбраны соответствующие опции
+            if (options.properties || options.commands || options.protections) {
+                requestBody.mappings = {};
+                
+                if (options.properties) {
+                    const paramsData = getCheckedMappingData('params');
+                    if (paramsData.length > 0) {
+                        requestBody.mappings.params = paramsData;
+                    }
+                }
+                
+                if (options.protections) {
+                    const protectionsData = getCheckedMappingData('protections');
+                    if (protectionsData.length > 0) {
+                        requestBody.mappings.protections = protectionsData;
+                    }
+                }
+                
+                if (options.commands) {
+                    const commandsData = getCheckedMappingData('commands');
+                    if (commandsData.length > 0) {
+                        requestBody.mappings.commands = commandsData;
+                    }
+                }
+            }
+
+            console.log('Отправка запроса на генерацию:', requestBody);
+
+            try {
+                setLoading(true, 'Генерация файла...');
+
+                const response = await fetch(`${SERVER_URL}/GetResultFile`, {
+                    method: 'POST',
+                    mode: 'cors',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(requestBody)
+                });
+
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    throw new Error(`HTTP ошибка! Статус: ${response.status}, ${errorText}`);
+                }
+
+                // Получаем имя файла из заголовка Content-Disposition или используем имя по умолчанию
+                const contentDisposition = response.headers.get('Content-Disposition');
+                let filename = 'result.xml';
+                if (contentDisposition) {
+                    const match = contentDisposition.match(/filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/);
+                    if (match && match[1]) {
+                        filename = match[1].replace(/['"]/g, '');
+                    }
+                }
+
+                // Скачиваем файл
+                const blob = await response.blob();
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = filename;
+                document.body.appendChild(a);
+                a.click();
+                window.URL.revokeObjectURL(url);
+                document.body.removeChild(a);
+
+                alert('Файл успешно сгенерирован и скачан');
+
+            } catch (error) {
+                console.error('Ошибка при генерации:', error);
+                if (error.message !== 'Empty tag') {
+                    alert(`Ошибка при генерации: ${error.message}`);
+                }
+            } finally {
+                setLoading(false);
+            }
+        }
+
+        // Вспомогательная функция для получения отмеченных данных из таблицы сопоставления
+        function getCheckedMappingData(mappingType) {
+            const table = getMappingTableByType(mappingType);
+            if (!table) return [];
+
+            const tbody = table.querySelector('tbody');
+            if (!tbody) return [];
+
+            const rows = tbody.querySelectorAll('tr');
+            const data = [];
+
+            rows.forEach(row => {
+                if (row.querySelector('.empty-message')) return;
+                
+                const checkbox = row.querySelector('td:last-child input');
+                const descriptionCell = row.querySelector('td:nth-child(2)');
+                const tagInput = row.querySelector('td:nth-child(3) input');
+                
+                if (checkbox && checkbox.checked) {
+                    const description = descriptionCell?.textContent?.trim() || '';
+                    const tag = tagInput?.value?.trim() || '';
+                    
+                    if (description && tag) {
+                        data.push({
+                            description: description,
+                            tag: tag
+                        });
+                    }
+                }
+            });
+
+            return data;
+        }
+
+        // Вспомогательная функция для получения таблицы по типу сопоставления
+        function getMappingTableByType(mappingType) {
+            switch(mappingType) {
+                case 'params': return paramsTable;
+                case 'protections': return protectionsTable;
+                case 'commands': return commandsTable;
+                default: return null;
+            }
+        }
+
+        async function initializePage() {
+            // Загружаем сохранённую тему
+            loadSavedTheme();
+            
+            setLoading(true, 'Загрузка решений...');
+            
+            try {
+                await loadSolutions();
+                await loadTemplates();
+                showEmptyObjectsTable();
+                
+                tabMappingBtn.click();
+                
+                console.log('Инициализация завершена');
+            } catch (error) {
+                console.error('Ошибка при инициализации:', error);
+                showEmptyMappingTables();
+                showEmptyObjectsTable();
+            } finally {
+                setLoading(false);
+                
+                updateButtonText(toggleMappingChecksBtn, mappingChecksState);
+                updateButtonText(toggleObjectsChecksBtn, objectsChecksState);
+            }
+        }
+
+        // Обработчики событий
+        document.addEventListener('DOMContentLoaded', initializePage);
+
+        infoBtn.addEventListener('click', () => {
+            infoModal.style.display = 'block';
+        });
+
+        closeModalBtn.addEventListener('click', () => {
+            infoModal.style.display = 'none';
+        });
+
+        window.addEventListener('click', (e) => {
+            if (e.target === infoModal) {
+                infoModal.style.display = 'none';
+            }
+        });
+
+        retryBtn.addEventListener('click', async () => {
+            setLoading(true, 'Перезагрузка данных...');
+            await loadSolutions();
+            await loadTemplates();
+            setLoading(false);
+        });
+
+        // Обработчик для кнопки сохранения
+        saveMappingBtn.addEventListener('click', async () => {
+            console.log('🔵 Кнопка Сохранить нажата');
+            console.log('📌 Текущий тип объекта:', objectTypeSelect.value);
+            console.log('📌 Текущий тип сопоставления:', currentMappingType);
+            console.log('📌 Активная таблица:', getActiveMappingTable()?.id);
+            
+            await saveMapping();
+        });
+
+        loadMappingCsvBtn.addEventListener('click', loadMappingFromCsv);
+        loadObjectsBtn.addEventListener('click', loadObjectsFromSolution);
+        loadObjectsCsvBtn.addEventListener('click', loadObjectsFromCsv);
+        saveObjectsCsvBtn.addEventListener('click', saveObjectsToCsv);
+
+        refreshObjectsBtn.addEventListener('click', () => {
+            if (loadedObjects && objectTypeSelect.value) {
+                displayObjectsForType(objectTypeSelect.value, loadedObjects);
+            } else {
+                alert('Сначала загрузите объекты');
+            }
+        });
+
+        objectTypeSelect.addEventListener('change', (e) => {
+            console.log('Изменен тип объекта:', e.target.value);
+            const selectedType = e.target.value;
+            
+            if (!selectedType) return;
+            
+            if (loadedTemplates && loadedTemplates[selectedType]) {
+                displayTemplatesForType(selectedType, loadedTemplates);
+            } else {
+                showEmptyMappingTables();
+            }
+            
+            if (loadedObjects && loadedObjects[selectedType]) {
+                displayObjectsForType(selectedType, loadedObjects);
+            } else {
+                showEmptyObjectsTable();
+            }
+        });
+
+        toggleMappingChecksBtn.addEventListener('click', () => {
+            toggleChecksInActiveMappingTable(mappingChecksState);
+            mappingChecksState = !mappingChecksState;
+            updateButtonText(toggleMappingChecksBtn, mappingChecksState);
+        });
+
+        toggleObjectsChecksBtn.addEventListener('click', () => {
+            toggleChecksInTable(objectsTable, objectsChecksState);
+            objectsChecksState = !objectsChecksState;
+            updateButtonText(toggleObjectsChecksBtn, objectsChecksState);
+        });
+
+        toggleObjectsChecksWithTagBtn.addEventListener('click', toggleChecksOnlyWithTag);
+
+        addSolutionBtn.addEventListener('click', () => {
+            fileInput.accept = '.xml';
+            fileInput.click();
+        });
+
+        fileInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                uploadSolution(file);
+            }
+            fileInput.value = '';
+        });
+
+        deleteSolutionBtn.addEventListener('click', async () => {
+            const selectedSolution = solutionSelect.value;
+
+            if (!selectedSolution || selectedSolution === 'Нет доступных решений' || selectedSolution === 'Ошибка загрузки') {
+                alert('Пожалуйста, выберите решение для удаления');
+                return;
+            }
+
+            // Получаем текст выбранного решения для подтверждения
+            const selectedText = solutionSelect.options[solutionSelect.selectedIndex]?.text || selectedSolution;
+
+            if (!confirm(`Вы уверены, что хотите удалить решение "${selectedText}"?`)) {
+                return;
+            }
+
+            try {
+                setLoading(true, 'Удаление решения...');
+
+                console.log('Отправка запроса на удаление:', selectedSolution);
+
+                const response = await fetch(`${SERVER_URL}/delete?name=${encodeURIComponent(selectedSolution)}`, {
+                    method: 'DELETE',
+                    mode: 'cors',
+                    headers: {
+                        'Accept': 'application/json'
+                    }
+                });
+
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    throw new Error(`HTTP ошибка! Статус: ${response.status}, ${errorText}`);
+                }
+
+                const result = await response.json();
+                console.log('Результат удаления:', result);
+
+                alert('Решение успешно удалено');
+
+                // Очищаем выбранное значение
+                solutionSelect.value = '';
+
+                // Перезагружаем список решений
+                await loadSolutions();
+                await loadTemplates();
+
+                // Очищаем таблицы
+                showEmptyMappingTables();
+                showEmptyObjectsTable();
+
+            } catch (error) {
+                console.error('Ошибка при удалении:', error);
+                alert(`Ошибка при удалении: ${error.message}`);
+            } finally {
+                setLoading(false);
+            }
+        });
+
+        themeToggle.addEventListener('click', toggleTheme);
+
+
+        // Функция сохранения в CSV
+        function saveObjectsToCsv() {
+            if (!objectsTable) {
+                alert('Таблица объектов не найдена');
+                return;
+            }
+
+            const rows = objectsTable.querySelectorAll('tr');
+            if (rows.length === 0 || (rows.length === 1 && rows[0].querySelector('.empty-message'))) {
+                alert('Нет данных для сохранения');
+                return;
+            }
+
+            const headers = ['Id объекта', 'Название', 'Головной тег OPC UA'];
+            const csvRows = [];
+            csvRows.push(headers.join('\t'));
+
+            rows.forEach(row => {
+                if (row.querySelector('.empty-message')) return;
+
+                const cells = row.cells;
+                if (cells.length < 3) return;
+
+                const id = cells[0]?.innerText?.trim() || '';
+                const name = cells[1]?.innerText?.trim() || '';
+                const tagInput = cells[2]?.querySelector('input');
+                const tag = tagInput ? tagInput.value.trim() : '';
+
+                const escapeField = (field) => {
+                    if (field.includes('\t') || field.includes('"') || field.includes('\n')) {
+                        return `"${field.replace(/"/g, '""')}"`;
+                    }
+                    return field;
+                };
+
+                csvRows.push([escapeField(id), escapeField(name), escapeField(tag)].join('\t'));
+            });
+
+            const csvContent = csvRows.join('\n');
+            const blob = new Blob(['\uFEFF' + csvContent], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `objects_export_${new Date().toISOString().slice(0, 10)}.csv`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+        }
+
+
+        // Обработчик для кнопки генерации
+        generateBtn.addEventListener('click', generateObjects);
+    </script>
+</body>
+</html>
