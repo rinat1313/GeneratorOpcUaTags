@@ -2,31 +2,23 @@ package service
 
 import (
 	"encoding/xml"
+	"fmt"
 	"generatorOPCUA/internal/tmpDomen"
+	"log"
 	"os"
 )
 
 func ParsingSolution(filename string) (tmpDomen.Solution, error) {
-	filename = "data/" + filename
-	file, err := os.Open(filename)
-	var sol tmpDomen.Solution
+	data, err := os.ReadFile("data/" + filename)
 	if err != nil {
-		return sol, err
+		return tmpDomen.Solution{}, err
 	}
-	defer file.Close()
-
-	decoder := xml.NewDecoder(file)
-
-	for {
-		t, err := decoder.Token()
-		if err != nil {
-			break
-		}
-		if se, ok := t.(xml.StartElement); ok {
-			if err = decoder.DecodeElement(&sol, &se); err != nil {
-				break
-			}
-		}
+	var sol tmpDomen.Solution
+	err = xml.Unmarshal(data, &sol)
+	if err != nil {
+		fmt.Println("Ошибка парсинга xml")
+		fmt.Println(err)
+		log.Fatal(err)
 	}
 	return sol, err
 }
@@ -35,9 +27,23 @@ func GetSolutionObject(solution tmpDomen.Solution) (map[string]map[string]tmpDom
 	result := make(map[string]map[string]tmpDomen.TechnologyObject)
 
 	for _, project := range solution.Projects.Project {
+		if project.Id == "674982374" {
+			fmt.Println("Нашли проект 674982374")
+		}
 		for _, graphicScheme := range project.GraphicScheme {
+			if graphicScheme.Id == "676518893" {
+				fmt.Println("Нашли схему 676518893")
+			}
 			for _, graphicObject := range graphicScheme.GraphicObject {
+				if graphicObject.Id == "681647283" {
+					fmt.Println("Нашли объект 681647283")
+				}
 				for _, technologyObject := range graphicObject.TechnologyObject {
+
+					if technologyObject.Template == "ReliefValve" {
+						fmt.Println("Нашли объект ReliefValve")
+					}
+
 					if _, ok := result[technologyObject.Template]; !ok {
 						result[technologyObject.Template] = make(map[string]tmpDomen.TechnologyObject)
 					}
@@ -85,6 +91,7 @@ func GetSolutionObject(solution tmpDomen.Solution) (map[string]map[string]tmpDom
 //
 //		return mapObjectsIsType, nil
 //	}
+
 func GetNameSolution(path string) (string, error) {
 	//regSolution := "<Solution\\s+[^>]+>.*?</Solution>"
 	////regSolution := "<Solution[^>]*\">"

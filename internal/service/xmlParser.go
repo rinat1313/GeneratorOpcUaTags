@@ -11,7 +11,7 @@ import (
 
 func ParseCommandXML() map[string]tmpDomen.ObjCommandIdTag {
 	var result []tmpDomen.ControlCommand
-	data, err := os.ReadFile("data/Solution.xml")
+	data, err := os.ReadFile("data/TestSolution.xml")
 	if err != nil {
 		panic(err)
 	}

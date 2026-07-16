@@ -148,12 +148,12 @@ type Points struct {
 }
 
 type Project struct {
-	Description   string          `xml:"Description,attr"`  //ok
-	ExternalCode  string          `xml:"ExternalCode,attr"` //ok
 	Id            string          `xml:"Id,attr"`           //ok
 	IdFromSource  string          `xml:"IdFromSource,attr"` //ok
 	Name          string          `xml:"Name,attr"`         //ok
+	Description   string          `xml:"Description,attr"`  //ok
 	Tag           string          `xml:"Tag,attr"`          //ok
+	ExternalCode  string          `xml:"ExternalCode,attr"` //ok
 	GraphicScheme []GraphicScheme `xml:"GraphicScheme"`     //ok
 }
 
@@ -172,15 +172,15 @@ type Solution struct {
 	Name                        string                      `xml:"Name,attr"`                   //ok
 	StepIterationsCount         string                      `xml:"StepIterationsCount,attr"`    //ok
 	Tag                         string                      `xml:"Tag,attr"`                    //ok
-	Automations                 Automations                 `xml:"Automations"`                 // ok
-	ControlCommands             ControlCommands             `xml:"ControlCommands"`             // ok
-	Projects                    Projects                    `xml:"Projects"`                    // ok
-	Scenarios                   Scenarios                   `xml:"Scenarios"`                   // ok
-	TargetAreas                 TargetAreas                 `xml:"TargetAreas"`                 // ok
-	TechnologyObjectsLinks      TechnologyObjectsLinks      `xml:"TechnologyObjectsLinks"`      // ok
-	TechnologyPassports         TechnologyPassports         `xml:"TechnologyPassports"`         // ok
-	TechnologyStandaloneObjects TechnologyStandaloneObjects `xml:"TechnologyStandaloneObjects"` // ok
-	Workspaces                  Workspaces                  `xml:"Workspaces"`                  // ok
+	Automations                 Automations                 `xml:"Automations"`                 //ok
+	ControlCommands             ControlCommands             `xml:"ControlCommands"`             //ok
+	Projects                    Projects                    `xml:"Projects"`                    //ok
+	Scenarios                   Scenarios                   `xml:"Scenarios"`                   //ok
+	TargetAreas                 TargetAreas                 `xml:"TargetAreas"`                 //ok
+	TechnologyObjectsLinks      TechnologyObjectsLinks      `xml:"TechnologyObjectsLinks"`      //ok
+	TechnologyPassports         TechnologyPassports         `xml:"TechnologyPassports"`         //ok
+	TechnologyStandaloneObjects TechnologyStandaloneObjects `xml:"TechnologyStandaloneObjects"` //ok
+	Workspaces                  Workspaces                  `xml:"Workspaces"`                  //ok
 }
 
 type TargetArea struct {
